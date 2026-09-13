@@ -41,3 +41,6 @@ application.yml
 
 ### 환경변수 ###
 .env
+
+### Mac OS 자동 생성 파일 ###
+.DS_Store
