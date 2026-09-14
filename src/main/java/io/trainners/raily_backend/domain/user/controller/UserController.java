@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,8 +24,9 @@ public class UserController {
     }
 
     @DeleteMapping("/me")
-    public ResponseEntity<Void> withdraw(@RequestBody @Valid UnregistRequest request){
-        userService.withdraw(request);
+    public ResponseEntity<Void> withdraw(Authentication authentication, @RequestBody @Valid UnregistRequest request){
+        String email = authentication.getName();
+        userService.withdraw(email, request);
         return ResponseEntity.noContent().build();
     }
 }

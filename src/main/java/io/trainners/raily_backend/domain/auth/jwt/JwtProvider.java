@@ -1,6 +1,6 @@
 package io.trainners.raily_backend.domain.auth.jwt;
 
-import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -37,21 +37,11 @@ public class JwtProvider {
                 .compact();
     }
 
-    public String getEmail(String token){
+    public Claims parseClaims(String token){
         return Jwts.parser()
                 .setSigningKey(key)
                 .build()
                 .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
-    }
-
-    public boolean validateToken(String token){
-        try{
-            Jwts.parser().setSigningKey(key).build().parseClaimsJws(token);
-            return true;
-        }catch (JwtException | IllegalArgumentException e){
-            return false;
-        }
+                .getBody();
     }
 }
