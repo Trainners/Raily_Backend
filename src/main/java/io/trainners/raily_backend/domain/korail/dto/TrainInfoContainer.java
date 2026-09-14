@@ -1,8 +1,7 @@
-package io.trainners.raily_backend.domain.korail.container;
+package io.trainners.raily_backend.domain.korail.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.trainners.raily_backend.domain.korail.dto.ScheduleViewResponse;
 import lombok.Getter;
 
 import java.util.List;
@@ -11,7 +10,7 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TrainInfoContainer {
     @JsonProperty("trn_info")
-    private List<ScheduleViewResponse> trainInfoList;
+    private List<ScheduleViewResponse> scheduleInfoList;
 }
 
 //{

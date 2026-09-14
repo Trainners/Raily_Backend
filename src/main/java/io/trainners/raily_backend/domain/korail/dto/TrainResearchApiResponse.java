@@ -4,14 +4,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 
-@Getter // test용
+@Getter // 나중에 KorailSeatService에서 꺼내서 씀
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ScheduleViewApiResponse {
-    // strResult 담을 String 필드
+public class TrainResearchApiResponse {
     @JsonProperty("strResult")
     private String strResult;
 
-    // trn_infos 담을 TrainInfoContainer타입 필드
-    @JsonProperty("trn_infos")
-    private TrainInfoContainer trainInfos;
+    @JsonProperty("srcar_infos")
+    private CarInfoContainer carInfos;
 }
