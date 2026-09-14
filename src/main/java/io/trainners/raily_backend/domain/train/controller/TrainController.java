@@ -78,6 +78,10 @@ public class TrainController {
             }
         }
 
+        if (matchedTrain == null) {
+            throw new IllegalArgumentException("선택한 열차를 찾을 수 없습니다.");
+        }
+
         TrainService trainService = new TrainService();
         KorailSeatService korailSeatService = new KorailSeatService();
 

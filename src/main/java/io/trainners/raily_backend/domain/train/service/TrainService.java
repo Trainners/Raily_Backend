@@ -39,6 +39,10 @@ public class TrainService {
                 }
             }
 
+            if (matchedTrain == null) {
+                continue;
+            }
+
             Map<String, AvailableSeatsApiResponse> segmentSeats = korailSeatService.showSeatLists(matchedTrain, korailClient);
             result.put(segDep + "-" + segArr, segmentSeats);
 
