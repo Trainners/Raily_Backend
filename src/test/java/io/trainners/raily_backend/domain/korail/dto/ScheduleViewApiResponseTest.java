@@ -40,7 +40,7 @@ class ScheduleViewApiResponseTest {
 
         assertEquals("SUCC", response.getStrResult());
 
-        List<ScheduleViewResponse> trainInfoList = response.getTrnInfos().getTrainInfoList();
+        List<ScheduleViewResponse> trainInfoList = response.getTrainInfos().getScheduleInfoList();
         assertEquals(1, trainInfoList.size());
 
         ScheduleViewResponse firstTrain = trainInfoList.get(0);
