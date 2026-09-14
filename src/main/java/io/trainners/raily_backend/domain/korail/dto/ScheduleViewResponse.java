@@ -34,6 +34,12 @@ public class ScheduleViewResponse {
     @JsonProperty("h_arv_rs_stn_cd")
     private String arrivalStationCode; // 도착역 코드
 
+    @JsonProperty("h_dpt_tm")
+    private String departureTime; // 출발 시각
+
+    @JsonProperty("h_arv_tm")
+    private String arrivalTime; // 도착 시각
+
     @JsonProperty("h_dpt_stn_run_ordr")
     private String departureStationRunOrder; // 운행 순번(출발)
 
