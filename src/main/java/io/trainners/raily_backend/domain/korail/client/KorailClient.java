@@ -1,12 +1,16 @@
 package io.trainners.raily_backend.domain.korail.client;
 
-import io.trainners.raily_backend.domain.korail.dto.ScheduleViewApiResponse;
+import io.trainners.raily_backend.domain.korail.dto.*;
+import org.springframework.http.MediaType;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 
 // 코레일 서버에 실제로 HTTP 요청을 보내는 곳.
-// ScheduleView, TrainResearch, ResidualSeatsResearch.do 세 개를 호출하는 메서드가 여기 들어감
+// ScheduleView, TrainResearch, AvailableSeats.do 세 개를 호출하는 메서드가 여기 들어감
 public class KorailClient {
-    public ScheduleViewApiResponse fetchSchedule(
+
+    public ScheduleViewApiResponse fetchScheduleView(
             String departureStation, String arrivalStation, String departureDate, String departureTime
     ) {
         // fetchSchedule에 요청 보낼 도구 준비
@@ -49,5 +53,78 @@ public class KorailClient {
                 .header("User-Agent", "Dalvik/2.1.0 (Linux; U; Android 13; SM-S928N Build/UP1A.231005.007)")
                 .retrieve() // 요청 보내고 응답 받을 준비
                 .body(ScheduleViewApiResponse.class); // 반환 타입
+    }
+
+    public TrainResearchApiResponse fetchTrainResearch(ScheduleViewResponse train) {
+        // form 형식 데이터를 보낼 땐 MultiValueMap 사용 (키 하나에 값을 여러 개 담을 수 있는 Map)
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+
+        // 동적 값
+        formData.add("txtTrnNo", train.getTrainNum()); // ("키 이름", "값")
+        formData.add("txtRunDt", train.getRunDate());
+        formData.add("txtDptDt", train.getDepartureDate());
+        formData.add("txtDptRsStnCd", train.getDepartureStationCode());
+        formData.add("txtArvRsStnCd", train.getArrivalStationCode());
+        formData.add("txtDptStnRunOrdr", train.getDepartureStationRunOrder());
+        formData.add("txtArvStnRunOrdr", train.getArrivalStationRunOrder());
+        formData.add("txtTrnClsfCd", train.getTrainTypeCode());
+        formData.add("txtTrnGpCd", train.getTrainGroupCode());
+        // 고정값
+        formData.add("txtPsrmClCd", "1");
+        formData.add("txtSeatAttCd", "015");
+        formData.add("txtTotPsgCnt", "1");
+        formData.add("txtMenuId", "11");
+        formData.add("txtGdNo", "");
+
+        RestClient restClient = RestClient
+                .builder()
+                .baseUrl("https://smart.letskorail.com:443")
+                .build();
+
+        return restClient
+                .post()
+                .uri("/classes/com.korail.mobile.research.TrainResearch")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .header("User-Agent", "Dalvik/2.1.0 (Linux; U; Android 13; SM-S928N Build/UP1A.231005.007)")
+                .body(formData) // 요청 본문에 데이터 실어 보냄
+                .retrieve()
+                .body(TrainResearchApiResponse.class); // 응답은 이 타입으로 바꿔서 받음
+    }
+
+    public AvailableSeatsApiResponse fetchAvailableSeats(ScheduleViewResponse train, TrainResearchResponse car) {
+        // form 형식 데이터를 보낼 땐 MultiValueMap 사용 (키 하나에 값을 여러 개 담을 수 있는 Map)
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+
+        // 동적 값
+        formData.add("txtSrcarNo", car.getCarNumber());
+        formData.add("txtTrnNo", train.getTrainNum()); // ("키 이름", "값")
+        formData.add("txtRunDt", train.getRunDate());
+        formData.add("txtDptDt", train.getDepartureDate());
+        formData.add("txtDptRsStnCd", train.getDepartureStationCode());
+        formData.add("txtArvRsStnCd", train.getArrivalStationCode());
+        formData.add("txtDptStnRunOrdr", train.getDepartureStationRunOrder());
+        formData.add("txtArvStnRunOrdr", train.getArrivalStationRunOrder());
+        formData.add("txtTrnClsfCd", train.getTrainTypeCode());
+        formData.add("txtTrnGpCd", train.getTrainGroupCode());
+        // 고정값
+        formData.add("txtPsrmClCd", "1");
+        formData.add("txtSeatAttCd", "015");
+        formData.add("txtTotPsgCnt", "1");
+        formData.add("txtMenuId", "11");
+        formData.add("txtGdNo", "");
+
+        RestClient restClient = RestClient
+                .builder()
+                .baseUrl("https://smart.letskorail.com:443")
+                .build();
+
+        return restClient
+                .post()
+                .uri("/classes/com.korail.mobile.research.ResidualSeatsResearch.do")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .header("User-Agent", "Dalvik/2.1.0 (Linux; U; Android 13; SM-S928N Build/UP1A.231005.007)")
+                .body(formData) // 요청 본문에 데이터 실어 보냄
+                .retrieve()
+                .body(AvailableSeatsApiResponse.class); // 응답은 이 타입으로 바꿔서 받음
     }
 }
