@@ -44,3 +44,6 @@ application.yml
 
 ### Mac OS 자동 생성 파일 ###
 .DS_Store
+
+### pem키 ###
+*.pem
