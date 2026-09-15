@@ -1,0 +1,18 @@
+# 빌드 결과물, 캐시 (이미지 안에서 새로 빌드)
+build
+.gradle
+
+# IDE, OS
+.idea
+*.iml
+.DS_Store
+
+# 비밀값 (이미지에 절대 포함 금지)
+.env
+*.pem
+
+# 이미지 빌드에 불필요
+.git
+.github
+docker-compose*.yml
+HELP.md

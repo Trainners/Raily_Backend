@@ -1,0 +1,44 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: raily-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Seoul
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    # 운영에서는 DB 포트를 외부에 열지 않음 (app 컨테이너만 내부 네트워크로 접근)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  app:
+    build: .
+    image: raily-backend:latest
+    container_name: raily-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      # application.yml 유무와 관계없이 환경변수가 우선 적용됨
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDLAUTO: update
+      SPRING_JPA_SHOWSQL: "false"
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESSTOKENVALIDITY: ${JWT_ACCESS_TOKEN_VALIDITY}
+      JAVA_OPTS: >-
+        -XX:MaxRAMPercentage=75
+        -Duser.timezone=Asia/Seoul
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
