@@ -16,18 +16,33 @@ public class JwtProvider {
 
     private final SecretKey key;
     private final long accessTokenValidity;
+    private final long refreshTokenValidity;
 
     public JwtProvider(
             @Value("${jwt.secret}") String secret,
-            @Value("${jwt.access-token-validity}") long accessTokenValidity
+            @Value("${jwt.access-token-validity}") long accessTokenValidity,
+            @Value("${jwt.refresh-token-validity}") long refreshTokenValidity
     ){
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.accessTokenValidity = accessTokenValidity;
+        this.refreshTokenValidity = refreshTokenValidity;
     }
 
-    public String createToken(String email){
+    public String createAccessToken(String email){
         Date now = new Date();
         Date expiry = new Date(now.getTime() + accessTokenValidity);
+
+        return Jwts.builder()
+                .setSubject(email)
+                .setIssuedAt(now)
+                .setExpiration(expiry)
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public String createRefreshToken(String email){
+        Date now = new Date();
+        Date expiry = new Date(now.getTime() + refreshTokenValidity);
 
         return Jwts.builder()
                 .setSubject(email)
@@ -43,5 +58,9 @@ public class JwtProvider {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+    }
+
+    public long getRefreshTokenValidity(){
+        return refreshTokenValidity;
     }
 }
