@@ -1,4 +1,7 @@
 package io.trainners.raily_backend.domain.notification.repository;
 
-public interface NotificationRepository {
+import io.trainners.raily_backend.domain.notification.model.entity.SeatWatch;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface NotificationRepository extends JpaRepository<SeatWatch, Long> {
 }
