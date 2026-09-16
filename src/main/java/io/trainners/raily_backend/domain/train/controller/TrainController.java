@@ -7,6 +7,8 @@ import io.trainners.raily_backend.domain.korail.dto.ScheduleViewResponse;
 import io.trainners.raily_backend.domain.korail.service.KorailSeatService;
 import io.trainners.raily_backend.domain.train.dto.TrainListResponse;
 import io.trainners.raily_backend.domain.train.service.TrainService;
+import io.trainners.raily_backend.domain.trainRunPlan.client.TrainRunPlanClient;
+import io.trainners.raily_backend.domain.trainRunPlan.service.TrainRunPlanService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,6 +19,11 @@ import java.util.Map;
 
 @RestController // HTTP 요청을 받아서 데이터(JSON)로 응답하는 곳
 public class TrainController {
+    // TrainRunPlanClient 인스턴스를 자동으로 넣어주도록 생성자 추가
+    public TrainController(TrainRunPlanClient trainRunPlanClient) {
+        this.trainRunPlanClient = trainRunPlanClient;
+    }
+    private final TrainRunPlanClient trainRunPlanClient;
 
     // 열차 리스트 조회 엔드포인트
     @GetMapping("/api/trains")
@@ -62,6 +69,7 @@ public class TrainController {
             @RequestParam String trainNum
     ) {
         KorailClient korailClient = new KorailClient();
+        TrainRunPlanService trainRunPlanService = new TrainRunPlanService();
 
         ScheduleViewApiResponse response =
                 korailClient.fetchScheduleView(departureStation, arrivalStation, date, time);
@@ -85,6 +93,7 @@ public class TrainController {
         TrainService trainService = new TrainService();
         KorailSeatService korailSeatService = new KorailSeatService();
 
-        return trainService.seatStatus(departureStation, arrivalStation, matchedTrain, korailClient, korailSeatService);
+        return trainService.seatStatus(departureStation, arrivalStation, matchedTrain,
+                korailClient, korailSeatService, trainRunPlanService, trainRunPlanClient);
     }
 }
