@@ -5,25 +5,27 @@ import io.trainners.raily_backend.domain.korail.dto.AvailableSeatsApiResponse;
 import io.trainners.raily_backend.domain.korail.dto.ScheduleViewApiResponse;
 import io.trainners.raily_backend.domain.korail.dto.ScheduleViewResponse;
 import io.trainners.raily_backend.domain.korail.service.KorailSeatService;
-import io.trainners.raily_backend.domain.train.TrainStops;
+import io.trainners.raily_backend.domain.trainRunPlan.client.TrainRunPlanClient;
+import io.trainners.raily_backend.domain.trainRunPlan.service.TrainRunPlanService;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class TrainService {
-    // TrainStops에 정의된 역 리스트를 연속된 두 역씩 짝지어서
     // 각 구간마다 fetchScheduleView -> KorailSeatService.showSeatLists
     public Map<String, Map<String, AvailableSeatsApiResponse>> seatStatus(
             String departureStation, String arrivalStation, ScheduleViewResponse scheduleViewResponse,
-            KorailClient korailClient, KorailSeatService korailSeatService
+            KorailClient korailClient, KorailSeatService korailSeatService,
+            TrainRunPlanService trainRunPlanService, TrainRunPlanClient trainRunPlanClient
     ) {
-        List<String> stops = new TrainStops().getStopsBetween(departureStation, arrivalStation);
-        Map<String, Map<String, AvailableSeatsApiResponse>> result = new HashMap<>();
-
         String currentTime = scheduleViewResponse.getDepartureTime(); // 처음에 선택한 열차의 출발시각
         String targetTrainNum = scheduleViewResponse.getTrainNum();   // 추적할 열차번호
         String date = scheduleViewResponse.getRunDate();              // 운행일
+
+        List<String> stops = trainRunPlanService.getStopsBetween(date, targetTrainNum,
+                departureStation, arrivalStation, trainRunPlanClient);
+        Map<String, Map<String, AvailableSeatsApiResponse>> result = new HashMap<>();
 
         for (int i = 0; i < stops.size() - 1; i++) {
             String segDep = stops.get(i);       // 이번 구간 출발역
