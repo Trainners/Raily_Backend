@@ -30,6 +30,22 @@ public class User {
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
+    @Column
+    private String refreshToken;
+
+    @Column
+    private LocalDateTime refreshTokenExpiry;
+
+    public void updateRefreshToken(String refreshToken, LocalDateTime expiry){
+        this.refreshToken = refreshToken;
+        this.refreshTokenExpiry = expiry;
+    }
+
+    public void clearRefreshToken(){
+        this.refreshToken = null;
+        this.refreshTokenExpiry = null;
+    }
+
     @Builder
     private User(String email, String password, String name){
         this.email = email;
