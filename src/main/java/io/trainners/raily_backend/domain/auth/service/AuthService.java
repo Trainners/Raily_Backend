@@ -9,6 +9,8 @@ import io.trainners.raily_backend.domain.auth.model.dto.LoginResult;
 import io.trainners.raily_backend.domain.auth.model.dto.TokenReissueResponse;
 import io.trainners.raily_backend.domain.user.model.entity.User;
 import io.trainners.raily_backend.domain.user.repository.UserRepository;
+import io.trainners.raily_backend.global.exception.BusinessException;
+import io.trainners.raily_backend.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -54,15 +56,15 @@ public class AuthService {
         try{
             claims = jwtProvider.parseClaims(refreshToken);
         } catch(Exception e){
-            throw new RuntimeException("유효하지 않은 리프레시 토큰입니다.");
+            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
 
         String email = claims.getSubject();
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         if(!refreshToken.equals(user.getRefreshToken())){
-            throw new RuntimeException("일치하지 않는 리프레시 토큰입니다.");
+            throw new BusinessException(ErrorCode.REFRESH_TOKEN_MISMATCH);
         }
 
         String newAccessToken = jwtProvider.createAccessToken(email);
@@ -72,7 +74,7 @@ public class AuthService {
     @Transactional
     public void logout(String email){
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         user.clearRefreshToken();
     }
 }

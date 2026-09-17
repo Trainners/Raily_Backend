@@ -5,6 +5,8 @@ import io.trainners.raily_backend.domain.notification.model.entity.SeatWatch;
 import io.trainners.raily_backend.domain.notification.repository.NotificationRepository;
 import io.trainners.raily_backend.domain.user.model.entity.User;
 import io.trainners.raily_backend.domain.user.repository.UserRepository;
+import io.trainners.raily_backend.global.exception.BusinessException;
+import io.trainners.raily_backend.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +19,7 @@ public class NotificationService {
 
     public void createSeatWatch(String email, SeatWatchRequest request){
         User user = userRepository.findByEmail(email)
-                .orElseThrow(()-> new RuntimeException("존재하지 않는 사용자입니다."));
+                .orElseThrow(()-> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         SeatWatch seatWatch = SeatWatch.builder()
                 .user(user)
