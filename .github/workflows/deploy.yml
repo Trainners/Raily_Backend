@@ -1,0 +1,36 @@
+name: Deploy to iMac
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: imac-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, raily-imac]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build & restart
+        run: docker compose -p railybackend -f docker-compose.prod.yml --env-file "$HOME/raily-deploy/.env" up -d --build
+
+      - name: Health check
+        run: |
+          for i in $(seq 1 30); do
+            [ "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/actuator/health || true)" = "200" ] && exit 0
+            sleep 5
+          done
+          docker logs --tail 100 raily-backend
+          exit 1
+
+      - name: Prune old images
+        if: always()
+        run: docker image prune -f
