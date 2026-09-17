@@ -14,7 +14,8 @@ permissions:
 
 jobs:
   deploy:
-    runs-on: [self-hosted, raily-imac]
+    if: github.ref == 'refs/heads/main'
+    runs-on: [ self-hosted, raily-imac ]
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
