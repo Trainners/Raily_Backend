@@ -50,7 +50,6 @@ public class TrainService {
 
             currentTime = matchedTrain.getArrivalTime();
         }
-
         return result;
     }
 }

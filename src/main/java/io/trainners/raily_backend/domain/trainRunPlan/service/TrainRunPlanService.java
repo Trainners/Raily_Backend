@@ -12,7 +12,7 @@ import java.util.List;
 public class TrainRunPlanService {
     // 응답에서 리스트 꺼내기
     public List<String> getStopStations(String runDate, String trainNo, TrainRunPlanClient trainRunPlanClient) {
-        TrainRunInfoApiResponse trainRunInfoApiResponse = trainRunPlanClient.fetchTrainRunInfo(lastWeekRunDate(runDate), trainNo);
+        TrainRunInfoApiResponse trainRunInfoApiResponse = trainRunPlanClient.fetchTrainRunInfo(lastWeekRunDate(runDate), padTrainNo(trainNo));
         List<TrainRunInfo> trainRunInfoList =
                 trainRunInfoApiResponse.response()
                         .body()
@@ -46,6 +46,12 @@ public class TrainRunPlanService {
         return date.format(dateTimeFormatter);
     }
 
+    // 0 채움 처리 헬퍼
+    private String padTrainNo(String trainNo) {
+        // 5자리 0채움 문자열 반환
+        return String.format("%05d", Integer.parseInt(trainNo));
+    }
+
     // 기존 하드코딩된 데이터에 대해 정차 구간을 구하던 메서드 변경
     public List<String> getStopsBetween(String runDate, String trainNo, String dptStn, String arrStn, TrainRunPlanClient trainRunPlanClient) {
         List<String> stops = getStopStations(runDate, trainNo, trainRunPlanClient);
@@ -53,5 +59,17 @@ public class TrainRunPlanService {
         int arrStnIdx = stops.indexOf(arrStn);
 
         return stops.subList(dptStnIdx, arrStnIdx + 1);
+    }
+
+    // 역별 도착시각까지 가져오는 메서드(스케쥴러용)
+    public List<TrainRunInfo> getTrainRunInfoList(String runDate, String trainNo, TrainRunPlanClient trainRunPlanClient){
+        TrainRunInfoApiResponse trainRunInfoApiResponse = trainRunPlanClient.fetchTrainRunInfo(lastWeekRunDate(runDate), trainNo);
+        List<TrainRunInfo> trainRunInfoList =
+                trainRunInfoApiResponse.response()
+                        .body()
+                        .items()
+                        .trainRunInfoList();
+
+        return trainRunInfoList;
     }
 }

@@ -38,9 +38,13 @@ public class TrainController {
         ScheduleViewApiResponse response =
                 korailClient.fetchScheduleView(departureStation, arrivalStation, date, time);
 
-        // 코레일에서 열차 목록 받아옴
-        List<ScheduleViewResponse> trains =
-                response.getTrainInfos().getScheduleInfoList();
+        // 코레일에서 열차 목록 받아옴 & null 처리
+        List<ScheduleViewResponse> trains;
+        if(response.getTrainInfos() == null) {
+            trains = new ArrayList<>();
+        } else {
+            trains = response.getTrainInfos().getScheduleInfoList();
+        }
 
         List<TrainListResponse> result = new ArrayList<>();
 
