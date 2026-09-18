@@ -42,7 +42,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/users/signup", "/api/auth/login",
                                 "/swagger-ui/**", "/v3/api-docs/**", "/api/auth/reissue",
-                                "/error", "/actuator/health"
+                                "/error", "/actuator/health", "/api/push/vapid-public-key"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
