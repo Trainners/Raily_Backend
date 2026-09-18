@@ -3,6 +3,8 @@ package io.trainners.raily_backend.domain.trainRunPlan.service;
 import io.trainners.raily_backend.domain.trainRunPlan.client.TrainRunPlanClient;
 import io.trainners.raily_backend.domain.trainRunPlan.dto.TrainRunInfo;
 import io.trainners.raily_backend.domain.trainRunPlan.dto.TrainRunInfoApiResponse;
+import io.trainners.raily_backend.global.exception.BusinessException;
+import io.trainners.raily_backend.global.exception.ErrorCode;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -57,6 +59,13 @@ public class TrainRunPlanService {
         List<String> stops = getStopStations(runDate, trainNo, trainRunPlanClient);
         int dptStnIdx = stops.indexOf(dptStn);
         int arrStnIdx = stops.indexOf(arrStn);
+
+        if(dptStnIdx == -1 || arrStnIdx == -1){
+            throw new BusinessException(ErrorCode.STATION_NOT_ON_ROUTE);
+        }
+        if (dptStnIdx >= arrStnIdx){
+            throw new BusinessException(ErrorCode.INVALID_STATION_ORDER);
+        }
 
         return stops.subList(dptStnIdx, arrStnIdx + 1);
     }
