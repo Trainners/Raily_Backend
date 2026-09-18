@@ -5,6 +5,8 @@ import io.trainners.raily_backend.domain.korail.dto.AvailableSeatsApiResponse;
 import io.trainners.raily_backend.domain.korail.dto.ScheduleViewApiResponse;
 import io.trainners.raily_backend.domain.korail.dto.ScheduleViewResponse;
 import io.trainners.raily_backend.domain.korail.service.KorailSeatService;
+import io.trainners.raily_backend.domain.seat.service.SeatRecommendationService;
+import io.trainners.raily_backend.domain.train.dto.SeatResponse;
 import io.trainners.raily_backend.domain.train.dto.TrainListResponse;
 import io.trainners.raily_backend.domain.train.service.TrainService;
 import io.trainners.raily_backend.domain.trainRunPlan.client.TrainRunPlanClient;
@@ -20,10 +22,13 @@ import java.util.Map;
 @RestController // HTTP 요청을 받아서 데이터(JSON)로 응답하는 곳
 public class TrainController {
     // TrainRunPlanClient 인스턴스를 자동으로 넣어주도록 생성자 추가
-    public TrainController(TrainRunPlanClient trainRunPlanClient) {
+    public TrainController(TrainRunPlanClient trainRunPlanClient,
+                           SeatRecommendationService seatRecommendationService) {
         this.trainRunPlanClient = trainRunPlanClient;
+        this.seatRecommendationService = seatRecommendationService;
     }
     private final TrainRunPlanClient trainRunPlanClient;
+    private final SeatRecommendationService seatRecommendationService;
 
     // 열차 리스트 조회 엔드포인트
     @GetMapping("/api/trains")
@@ -63,14 +68,26 @@ public class TrainController {
         return result;
     }
 
-    // 구간별 좌석 조회 엔드포인트
+    // 구간별 좌석 조회 엔드포인트 - 우선순위에 따라 정렬된 좌석 목록을 내려줌
     @GetMapping("/api/trains/seats")
-    public Map<String, Map<String, AvailableSeatsApiResponse>> getSeatStatus(
+    public List<SeatResponse> getRecommendedSeats(
             @RequestParam String departureStation,
             @RequestParam String arrivalStation,
             @RequestParam String date,
             @RequestParam String time,
             @RequestParam String trainNum
+    ) {
+        Map<String, Map<String, AvailableSeatsApiResponse>> segmentSeatStatus =
+                fetchSegmentSeatStatus(departureStation, arrivalStation, date, time, trainNum);
+
+        return seatRecommendationService.recommend(segmentSeatStatus).stream()
+                .map(SeatResponse::from)
+                .toList();
+    }
+
+    // 코레일에서 구간별 좌석 원본을 수집 (열차 매칭 -> 구간별 좌석 조회)
+    private Map<String, Map<String, AvailableSeatsApiResponse>> fetchSegmentSeatStatus(
+            String departureStation, String arrivalStation, String date, String time, String trainNum
     ) {
         KorailClient korailClient = new KorailClient();
         TrainRunPlanService trainRunPlanService = new TrainRunPlanService();

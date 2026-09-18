@@ -9,6 +9,7 @@ import io.trainners.raily_backend.domain.trainRunPlan.client.TrainRunPlanClient;
 import io.trainners.raily_backend.domain.trainRunPlan.service.TrainRunPlanService;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,7 +26,7 @@ public class TrainService {
 
         List<String> stops = trainRunPlanService.getStopsBetween(date, targetTrainNum,
                 departureStation, arrivalStation, trainRunPlanClient);
-        Map<String, Map<String, AvailableSeatsApiResponse>> result = new HashMap<>();
+        Map<String, Map<String, AvailableSeatsApiResponse>> result = new LinkedHashMap<>();
 
         for (int i = 0; i < stops.size() - 1; i++) {
             String segDep = stops.get(i);       // 이번 구간 출발역
