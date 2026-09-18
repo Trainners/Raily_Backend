@@ -68,7 +68,7 @@ public class AuthService {
         }
 
         String newAccessToken = jwtProvider.createAccessToken(email);
-        return new TokenReissueResponse(newAccessToken);
+        return new TokenReissueResponse(newAccessToken, user.getEmail(), user.getName());
     }
 
     @Transactional
