@@ -19,9 +19,13 @@ public class KorailSeatService {
 
     public Map<String, AvailableSeatsApiResponse> showSeatLists(ScheduleViewResponse scheduleViewResponse, KorailClient korailClient) {
         TrainResearchApiResponse trainResearchApiResponse = korailClient.fetchTrainResearch(scheduleViewResponse);
-        List<TrainResearchResponse> carList = trainResearchApiResponse.getCarInfos().getTrainInfoList();
-
         Map<String, AvailableSeatsApiResponse> result = new HashMap<>();
+
+        // 해당 구간이 매진이면 코레일이 호차 목록 대신 strResult=FAIL("잔여석이 없습니다")을 내려줌
+        if (trainResearchApiResponse.getCarInfos() == null) {
+            return result;
+        }
+        List<TrainResearchResponse> carList = trainResearchApiResponse.getCarInfos().getTrainInfoList();
 
         for(TrainResearchResponse car : carList) {
             // carList 안의 호차 하나하나에 대해 코드 반복 실행
