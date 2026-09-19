@@ -20,6 +20,8 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SeatWatch {
     private static final DateTimeFormatter HHMMSS = DateTimeFormatter.ofPattern("HHmmss");
+    // 감시 윈도우 크기(분). 도착 예정 시각 기준 이만큼 전부터 조회를 시작한다. 운영하며 조정 가능
+    private static final int WINDOW_MINUTES = 10;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -72,7 +74,11 @@ public class SeatWatch {
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
             name = "seat_watch_stops",
-            joinColumns = @JoinColumn(name = "seat_watch_id")
+            joinColumns = @JoinColumn(name = "seat_watch_id"),
+            foreignKey = @ForeignKey(
+                    name = "fk_seat_watch_stops_seat_watch",
+                    foreignKeyDefinition = "FOREIGN KEY (seat_watch_id) REFERENCES seat_watches(id) ON DELETE CASCADE"
+            )
     )
     @OrderColumn(name = "stop_order")
     private List<StopSchedule> stops = new ArrayList<>();
@@ -99,7 +105,7 @@ public class SeatWatch {
         this.toStation = toStation;
         this.departureTime = departureTime;
         this.arrivalTime = arrivalTime;
-        this.stops = new ArrayList<>(stops); // String.join(",", stops);
+        this.stops = new ArrayList<>(stops);
         this.status = SeatWatchStatus.ACTIVE;
     }
 
@@ -127,15 +133,49 @@ public class SeatWatch {
         this.status = SeatWatchStatus.CANCELED;
     }
 
+    /** 지금 감시 윈도우(도착 10분 전 ~ 출발)에 든 중간 정차역의 인덱스. 없으면 -1 */
+    public int findStopIndexInWindow(LocalDateTime now) {
+        for (int i = 1; i <= stops.size() - 2; i++) { // 0은 출발역, 마지막은 종착역이므로 제외
+            StopSchedule stop = stops.get(i);
+
+            if (stop.getArrivalTime() == null || stop.getDepartureTime() == null) {
+                continue; // 시각 정보가 없는 역은 건너뛰고 다음 역 확인
+            }
+
+            LocalDateTime start = toDateTime(stop.getArrivalTime()).minusMinutes(WINDOW_MINUTES);
+            LocalDateTime end = toDateTime(stop.getDepartureTime());
+
+            if (!now.isBefore(start) && !now.isAfter(end)) { // now가 start 이상이고 end 이하이면
+                return i;
+            }
+        }
+
+        return -1; // 모든 정차역을 확인했지만 윈도우에 든 역이 없음
+    }
+
     // 여정이 끝났는지 판단
     public boolean isJourneyOver(LocalDateTime now) {
+        return now.isAfter(toDateTime(arrivalTime));
+//        LocalDate date = LocalDate.parse(runDate, DateTimeFormatter.BASIC_ISO_DATE);
+//        LocalTime dep = LocalTime.parse(departureTime, HHMMSS);
+//        LocalTime arr = LocalTime.parse(arrivalTime, HHMMSS);
+//        LocalDateTime arrivalAt = LocalDateTime.of(date, arr); // 실제 도착 일시
+//        if (arr.isBefore(dep)) { // 자정을 넘기는 열차의 경우 도착일 +1
+//            arrivalAt = arrivalAt.plusDays(1);
+//        }
+//        return now.isAfter(arrivalAt); // 지금이 실제 도착 일시를 지났으면 true
+    }
+
+    /** runDate + HHmmss 를 실제 일시로 변환. 출발 시각보다 이르면 자정을 넘긴 것으로 보고 +1일 */
+    private LocalDateTime toDateTime(String hhmmss) {
         LocalDate date = LocalDate.parse(runDate, DateTimeFormatter.BASIC_ISO_DATE);
-        LocalTime dep = LocalTime.parse(departureTime, HHMMSS);
-        LocalTime arr = LocalTime.parse(arrivalTime, HHMMSS);
-        LocalDateTime arrivalAt = LocalDateTime.of(date, arr); // 실제 도착 일시
-        if (arr.isBefore(dep)) { // 자정을 넘기는 열차의 경우 도착일 +1
-            arrivalAt = arrivalAt.plusDays(1);
+        LocalTime time = LocalTime.parse(hhmmss, HHMMSS);
+        LocalTime depTime = LocalTime.parse(this.departureTime, HHMMSS);
+
+        if (time.isBefore(depTime)) { // 자정 넘은 경우
+            return LocalDateTime.of(date, time).plusDays(1);
         }
-        return now.isAfter(arrivalAt); // 지금이 실제 도착 일시를 지났으면 true
+
+        return LocalDateTime.of(date, time);
     }
 }
