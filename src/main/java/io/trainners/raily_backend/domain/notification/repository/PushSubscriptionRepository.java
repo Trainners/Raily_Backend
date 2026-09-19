@@ -1,0 +1,16 @@
+package io.trainners.raily_backend.domain.notification.repository;
+
+import io.trainners.raily_backend.domain.notification.model.entity.PushSubscription;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+import java.util.Optional;
+
+public interface PushSubscriptionRepository extends JpaRepository<PushSubscription, Long> {
+    // 구독 등록 시 이 기기가 등록돼있는지 여부 확인 -> 있으면 갱신, 없으면 새로 저장
+    Optional<PushSubscription> findByEndpoint(String endpoint);
+    // 알림 보낼 때 그 사용자의 모든 기기를 가져오기 위함
+    List<PushSubscription> findAllByUserId(Long userId);
+    // 로그아웃/알림 끄기 시 내 기기만 삭제 (email로 소유자 검사)
+    void deleteByEndpointAndUserEmail(String endpoint, String email);
+}
