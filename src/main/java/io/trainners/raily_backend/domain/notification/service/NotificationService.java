@@ -23,9 +23,9 @@ public class NotificationService {
 
         SeatWatch seatWatch = SeatWatch.builder()
                 .user(user)
-                .trainNumber(request.getTrainNumber())
-                .carNumber(request.getCarNumber())
-                .seatNumber(request.getSeatNumber())
+                .trainNumber(request.trainNumber())
+                .carNumber(request.carNumber())
+                .seatNumber(request.seatNumber())
                 .build();
 
         seatWatchRepository.save(seatWatch);
