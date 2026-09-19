@@ -60,19 +60,23 @@ public class TrainRunPlanService {
         int dptStnIdx = stops.indexOf(dptStn);
         int arrStnIdx = stops.indexOf(arrStn);
 
+        // index == -1일 경우 처리하는 코드
         if(dptStnIdx == -1 || arrStnIdx == -1){
             throw new BusinessException(ErrorCode.STATION_NOT_ON_ROUTE);
         }
         if (dptStnIdx >= arrStnIdx){
             throw new BusinessException(ErrorCode.INVALID_STATION_ORDER);
-        }
 
         return stops.subList(dptStnIdx, arrStnIdx + 1);
     }
 
     // 역별 도착시각까지 가져오는 메서드(스케쥴러용)
-    public List<TrainRunInfo> getTrainRunInfoList(String runDate, String trainNo, TrainRunPlanClient trainRunPlanClient){
-        TrainRunInfoApiResponse trainRunInfoApiResponse = trainRunPlanClient.fetchTrainRunInfo(lastWeekRunDate(runDate), trainNo);
+    public List<TrainRunInfo> getTrainRunInfoList(
+            String runDate, String trainNo, TrainRunPlanClient trainRunPlanClient
+    ){
+        TrainRunInfoApiResponse trainRunInfoApiResponse =
+                trainRunPlanClient.fetchTrainRunInfo(lastWeekRunDate(runDate),
+                        padTrainNo(trainNo)); // 0 채움 처리
         List<TrainRunInfo> trainRunInfoList =
                 trainRunInfoApiResponse.response()
                         .body()
