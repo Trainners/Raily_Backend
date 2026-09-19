@@ -61,8 +61,11 @@ public class TrainRunPlanService {
         int arrStnIdx = stops.indexOf(arrStn);
 
         // index == -1일 경우 처리하는 코드
-        if (dptStnIdx == -1 || arrStnIdx == -1) {
-            throw new BusinessException(ErrorCode.STOP_STATION_NOT_FOUND);
+        if(dptStnIdx == -1 || arrStnIdx == -1){
+            throw new BusinessException(ErrorCode.STATION_NOT_ON_ROUTE);
+        }
+        if (dptStnIdx >= arrStnIdx) {
+            throw new BusinessException(ErrorCode.INVALID_STATION_ORDER);
         }
 
         return stops.subList(dptStnIdx, arrStnIdx + 1);

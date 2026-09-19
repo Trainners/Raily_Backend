@@ -2,6 +2,8 @@ package io.trainners.raily_backend.domain.korail.service;
 
 import io.trainners.raily_backend.domain.korail.client.KorailClient;
 import io.trainners.raily_backend.domain.korail.dto.*;
+import io.trainners.raily_backend.global.exception.BusinessException;
+import io.trainners.raily_backend.global.exception.ErrorCode;
 
 import java.util.HashMap;
 import java.util.List;
@@ -19,6 +21,11 @@ public class KorailSeatService {
 
     public Map<String, AvailableSeatsApiResponse> showSeatLists(ScheduleViewResponse scheduleViewResponse, KorailClient korailClient) {
         TrainResearchApiResponse trainResearchApiResponse = korailClient.fetchTrainResearch(scheduleViewResponse);
+
+        if(trainResearchApiResponse.getCarInfos() == null) {
+            throw new BusinessException(ErrorCode.CAR_INFO_NOT_FOUND);
+        }
+
         List<TrainResearchResponse> carList = trainResearchApiResponse.getCarInfos().getTrainInfoList();
 
         Map<String, AvailableSeatsApiResponse> result = new HashMap<>();
