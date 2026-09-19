@@ -20,6 +20,8 @@ public class TrainRunPlanClient {
                 .uri(uriBuilder -> uriBuilder.path("/travelerTrainRunInfo2")
                         .queryParam("serviceKey", serviceKey)
                         .queryParam("returnType", "JSON")
+                        .queryParam("numOfRows", 100)
+                        .queryParam("pageNo", 1)
                         .queryParam("cond[run_ymd::EQ]", runDate)
                         .queryParam("cond[trn_no::EQ]", trainNo)
                         .build())

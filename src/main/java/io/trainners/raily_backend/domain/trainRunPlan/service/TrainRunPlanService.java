@@ -64,8 +64,9 @@ public class TrainRunPlanService {
         if(dptStnIdx == -1 || arrStnIdx == -1){
             throw new BusinessException(ErrorCode.STATION_NOT_ON_ROUTE);
         }
-        if (dptStnIdx >= arrStnIdx){
+        if (dptStnIdx >= arrStnIdx) {
             throw new BusinessException(ErrorCode.INVALID_STATION_ORDER);
+        }
 
         return stops.subList(dptStnIdx, arrStnIdx + 1);
     }
