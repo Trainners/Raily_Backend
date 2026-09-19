@@ -9,6 +9,10 @@ import io.trainners.raily_backend.domain.train.dto.TrainListResponse;
 import io.trainners.raily_backend.domain.train.service.TrainService;
 import io.trainners.raily_backend.domain.trainRunPlan.client.TrainRunPlanClient;
 import io.trainners.raily_backend.domain.trainRunPlan.service.TrainRunPlanService;
+import io.trainners.raily_backend.global.exception.BusinessException;
+import io.trainners.raily_backend.global.exception.ErrorCode;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,10 +32,10 @@ public class TrainController {
     // 열차 리스트 조회 엔드포인트
     @GetMapping("/api/trains")
     public List<TrainListResponse> getTrainList(
-            @RequestParam String departureStation,
-            @RequestParam String arrivalStation,
-            @RequestParam String date,
-            @RequestParam String time
+            @RequestParam @NotBlank String departureStation,
+            @RequestParam @NotBlank String arrivalStation,
+            @RequestParam @Pattern(regexp = "\\d{8}", message = "날짜는 8자리 숫자(예: 20260916) 형식이어야 합니다.")  String date,
+            @RequestParam @Pattern(regexp = "\\d{6}", message = "출발 시간은 6자리 숫자(예: 143000) 형식이어야 합니다.")  String time
     ) {
         KorailClient korailClient = new KorailClient(); // 일단 의존성 주입 생략함
 
@@ -66,11 +70,11 @@ public class TrainController {
     // 구간별 좌석 조회 엔드포인트
     @GetMapping("/api/trains/seats")
     public Map<String, Map<String, AvailableSeatsApiResponse>> getSeatStatus(
-            @RequestParam String departureStation,
-            @RequestParam String arrivalStation,
-            @RequestParam String date,
-            @RequestParam String time,
-            @RequestParam String trainNum
+            @RequestParam @NotBlank String departureStation,
+            @RequestParam @NotBlank String arrivalStation,
+            @RequestParam @Pattern(regexp = "\\d{8}", message = "날짜는 8자리 숫자(예: 20260916) 형식이어야 합니다.")  String date,
+            @RequestParam @Pattern(regexp = "\\d{6}", message = "출발 시간은 6자리 숫자(예: 143000) 형식이어야 합니다.")  String time,
+            @RequestParam @Pattern(regexp = "\\d+", message = "열차 번호는 숫자로 입력해야 합니다.") String trainNum
     ) {
         KorailClient korailClient = new KorailClient();
         TrainRunPlanService trainRunPlanService = new TrainRunPlanService();
@@ -91,7 +95,7 @@ public class TrainController {
         }
 
         if (matchedTrain == null) {
-            throw new IllegalArgumentException("선택한 열차를 찾을 수 없습니다.");
+            throw new BusinessException(ErrorCode.TRAIN_NOT_FOUND);
         }
 
         TrainService trainService = new TrainService();
