@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -67,9 +68,14 @@ public class SeatWatch {
     @Column(nullable = false, length = 6)
     private String arrivalTime;
 
-    /** fromStation ~ toStation 정차역을 콤마로 이어 저장 */
-    @Column(nullable = false, length = 1000)
-    private String stops;
+    /** fromStation ~ toStation 정차역과 각 역의 도착/출발 시각 */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "seat_watch_stops",
+            joinColumns = @JoinColumn(name = "seat_watch_id")
+    )
+    @OrderColumn(name = "stop_order")
+    private List<StopSchedule> stops = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -83,7 +89,7 @@ public class SeatWatch {
     @Builder
     private SeatWatch(User user, String trainNumber, String carNumber, String seatNumber,
                       String runDate, String fromStation, String toStation,
-                      String departureTime, String arrivalTime, List<String> stops){
+                      String departureTime, String arrivalTime, List<StopSchedule> stops){
         this.user = user;
         this.trainNumber = trainNumber;
         this.carNumber = carNumber;
@@ -93,17 +99,13 @@ public class SeatWatch {
         this.toStation = toStation;
         this.departureTime = departureTime;
         this.arrivalTime = arrivalTime;
-        this.stops = String.join(",", stops);
+        this.stops = new ArrayList<>(stops); // String.join(",", stops);
         this.status = SeatWatchStatus.ACTIVE;
     }
 
     @PrePersist
     private void prePersist(){
         this.createdAt = LocalDateTime.now();
-    }
-
-    public List<String> getStopList() {
-        return List.of(stops.split(","));
     }
 
     public boolean isActive() {
