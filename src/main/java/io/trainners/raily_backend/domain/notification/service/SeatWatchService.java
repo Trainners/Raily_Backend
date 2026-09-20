@@ -1,11 +1,14 @@
 package io.trainners.raily_backend.domain.notification.service;
 
+import io.trainners.raily_backend.domain.notification.event.NotificationCreatedEvent;
 import io.trainners.raily_backend.domain.notification.model.dto.SeatWatchCreateResponse;
 import io.trainners.raily_backend.domain.notification.model.dto.SeatWatchRequest;
 import io.trainners.raily_backend.domain.notification.model.dto.SeatWatchStatusResponse;
+import io.trainners.raily_backend.domain.notification.model.entity.Notification;
 import io.trainners.raily_backend.domain.notification.model.entity.SeatWatch;
 import io.trainners.raily_backend.domain.notification.model.entity.SeatWatchStatus;
 import io.trainners.raily_backend.domain.notification.model.entity.StopSchedule;
+import io.trainners.raily_backend.domain.notification.repository.NotificationRepository;
 import io.trainners.raily_backend.domain.notification.repository.SeatWatchRepository;
 import io.trainners.raily_backend.domain.trainRunPlan.client.TrainRunPlanClient;
 import io.trainners.raily_backend.domain.trainRunPlan.dto.TrainRunInfo;
@@ -15,6 +18,7 @@ import io.trainners.raily_backend.domain.user.repository.UserRepository;
 import io.trainners.raily_backend.global.exception.BusinessException;
 import io.trainners.raily_backend.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +44,9 @@ public class SeatWatchService {
     // TrainRunPlanService 의 메서드들이 클라이언트를 파라미터로 받는 구조라 함께 주입받는다.
     private final TrainRunPlanService trainRunPlanService;
     private final TrainRunPlanClient trainRunPlanClient;
+
+    private final NotificationRepository notificationRepository;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
      // 착석 등록 (공공데이터 API를 1회 호출해 정차역 시각까지 저장해 둔다)
      // 스케줄러가 매 틱마다 외부 API를 부르지 않아도 되도록, 등록 시점에 한 번만 받아온다
@@ -78,7 +85,6 @@ public class SeatWatchService {
         return SeatWatchCreateResponse.from(saved);
     }
 
-
      // 인앱 폴링용 상태 조회
      // 푸시를 못 받는 사용자(권한 거부, iOS 미설치)에게는 이 경로가 유일한 통지 수단이다
     @Transactional(readOnly = true)
@@ -95,6 +101,35 @@ public class SeatWatchService {
         SeatWatch seatWatch = findMine(email, seatWatchId);
         seatWatch.cancel();   // 더티 체킹으로 UPDATE
     }
+
+    // 판매 감지 처리 (스케줄러가 호출)
+    // 상태 변경 / 알림 저장 / 이벤트 발행이 한 트랜잭션에서 일어나고, 실제 푸시는 커밋 이후 리스너가 보냄
+    @Transactional
+    public void markSold(Long seatWatchId, String soldFromStation) {
+        SeatWatch seatWatch = seatWatchRepository.findById(seatWatchId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SEAT_WATCH_NOT_FOUND));
+
+        // 이미 알림이 나갔거나 취소된 건이면 중복 발송하지 않는다
+        if (!seatWatch.isActive()) {
+            return;
+        }
+
+        seatWatch.markNotified(soldFromStation);
+
+        // Notification.seatSold 가 soldFromStation 을 읽으므로 markNotified 이후에 만들어야 한다
+        Notification notification = notificationRepository.save(Notification.seatSold(seatWatch));
+        applicationEventPublisher.publishEvent(new NotificationCreatedEvent(notification.getId()));
+    }
+
+    // 여정 종료 처리. 더 팔릴 수 없으므로 감시 대상에서 제외한다
+    @Transactional
+    public void expire(Long seatWatchId) {
+        seatWatchRepository.findById(seatWatchId)
+                .filter(SeatWatch::isActive)
+                .ifPresent(SeatWatch::expire);
+    }
+
+    /* @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ private @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ */
 
     // 내 감시건만 조회 (email 조건을 쿼리에 넣어 조회와 권한 검사를 한 번에 끝냄)
     // 남의 id를 넣으면 403이 아니라 404가 나가므로, 그 id의 존재 여부가 새어나가지 않는다!!
@@ -122,7 +157,6 @@ public class SeatWatchService {
         }
         return stops;
     }
-
 
     // "2026-09-18 05:30:00.0" -> "053000"
     // 시발역은 도착 시각이, 종착역은 출발 시각이 null 이므로 null 을 그대로 통과시킨다.
