@@ -25,11 +25,26 @@ public class WebPushSender {
     private final PushSubscriptionService pushSubscriptionService;
 
     public void send(Long userId, PushMessage message) {
-        List<PushSubscription> subscriptions
-                = pushSubscriptionRepository.findAllByUserId(userId);
+        dispatch(pushSubscriptionRepository.findAllByUserId(userId), message);
+    }
+
+    // 개발·시연용 테스트 푸시. 코레일에서 실제로 좌석이 팔리기를 기다리지 않고
+    // VAPID 서명 · payload 암호화 · 브라우저 수신까지 한 번에 검증할 수 있다.
+    public void sendTest(String email) {
+        PushMessage message = new PushMessage(
+                "테스트 알림",
+                "웹 푸시가 정상적으로 동작합니다.",
+                "/notifications",
+                "push-test",       // 같은 tag 라서 여러 번 눌러도 알림창에 하나만 남는다
+                null               // 실제 알림 레코드가 없으므로 id 없음
+        );
+        dispatch(pushSubscriptionRepository.findAllByUserEmail(email), message);
+    }
+
+    private void dispatch(List<PushSubscription> subscriptions, PushMessage message) {
         if (subscriptions.isEmpty()) {
-            // 알림 권한을 거부했거나 아직 구독하지 않은 사용자. 알림함에는 이미 남아 있다
-            log.debug("푸시 구독 없음 userId={}", userId);
+            // 알림 권한을 거부했거나 아직 구독하지 않은 사용자. 알림함에는 이미 남아 있다.
+            log.debug("푸시 구독 없음");
             return;
         }
 
