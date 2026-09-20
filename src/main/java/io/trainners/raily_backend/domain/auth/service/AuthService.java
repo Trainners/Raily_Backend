@@ -59,6 +59,10 @@ public class AuthService {
             throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
 
+        if(!"refresh".equals(claims.get("type", String.class))){
+            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
         String email = claims.getSubject();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
