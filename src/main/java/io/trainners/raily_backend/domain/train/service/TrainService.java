@@ -5,17 +5,17 @@ import io.trainners.raily_backend.domain.korail.dto.AvailableSeatsApiResponse;
 import io.trainners.raily_backend.domain.korail.dto.ScheduleViewApiResponse;
 import io.trainners.raily_backend.domain.korail.dto.ScheduleViewResponse;
 import io.trainners.raily_backend.domain.korail.service.KorailSeatService;
+import io.trainners.raily_backend.domain.train.dto.SegmentSeatStatus;
 import io.trainners.raily_backend.domain.trainRunPlan.client.TrainRunPlanClient;
 import io.trainners.raily_backend.domain.trainRunPlan.service.TrainRunPlanService;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public class TrainService {
     // 각 구간마다 fetchScheduleView -> KorailSeatService.showSeatLists
-    public Map<String, Map<String, AvailableSeatsApiResponse>> seatStatus(
+    public SegmentSeatStatus seatStatus(
             String departureStation, String arrivalStation, ScheduleViewResponse scheduleViewResponse,
             KorailClient korailClient, KorailSeatService korailSeatService,
             TrainRunPlanService trainRunPlanService, TrainRunPlanClient trainRunPlanClient
@@ -43,6 +43,7 @@ public class TrainService {
             }
 
             if (matchedTrain == null) {
+                result.put(segDep + "-" + segArr, Map.of());
                 continue;
             }
 
@@ -51,6 +52,6 @@ public class TrainService {
 
             currentTime = matchedTrain.getArrivalTime();
         }
-        return result;
+        return new SegmentSeatStatus(stops, result);
     }
 }
