@@ -1,10 +1,13 @@
 package io.trainners.raily_backend.domain.train.controller;
 
 import io.trainners.raily_backend.domain.korail.client.KorailClient;
-import io.trainners.raily_backend.domain.korail.dto.AvailableSeatsApiResponse;
 import io.trainners.raily_backend.domain.korail.dto.ScheduleViewApiResponse;
 import io.trainners.raily_backend.domain.korail.dto.ScheduleViewResponse;
 import io.trainners.raily_backend.domain.korail.service.KorailSeatService;
+import io.trainners.raily_backend.domain.seat.service.SeatRecommendationService;
+import io.trainners.raily_backend.domain.train.dto.SeatMatrixResponse;
+import io.trainners.raily_backend.domain.train.dto.SeatResponse;
+import io.trainners.raily_backend.domain.train.dto.SegmentSeatStatus;
 import io.trainners.raily_backend.domain.train.dto.TrainListResponse;
 import io.trainners.raily_backend.domain.train.service.TrainService;
 import io.trainners.raily_backend.domain.trainRunPlan.client.TrainRunPlanClient;
@@ -19,15 +22,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @RestController // HTTP 요청을 받아서 데이터(JSON)로 응답하는 곳
 public class TrainController {
     // TrainRunPlanClient 인스턴스를 자동으로 넣어주도록 생성자 추가
-    public TrainController(TrainRunPlanClient trainRunPlanClient) {
+    public TrainController(TrainRunPlanClient trainRunPlanClient,
+                           SeatRecommendationService seatRecommendationService) {
         this.trainRunPlanClient = trainRunPlanClient;
+        this.seatRecommendationService = seatRecommendationService;
     }
     private final TrainRunPlanClient trainRunPlanClient;
+    private final SeatRecommendationService seatRecommendationService;
 
     // 열차 리스트 조회 엔드포인트
     @GetMapping("/api/trains")
@@ -67,14 +72,29 @@ public class TrainController {
         return result;
     }
 
-    // 구간별 좌석 조회 엔드포인트
+    // 구간별 좌석 조회 엔드포인트 - 우선순위에 따라 정렬된 좌석 목록을 내려줌
     @GetMapping("/api/trains/seats")
-    public Map<String, Map<String, AvailableSeatsApiResponse>> getSeatStatus(
+    public SeatMatrixResponse getRecommendedSeats(
             @RequestParam @NotBlank String departureStation,
             @RequestParam @NotBlank String arrivalStation,
             @RequestParam @Pattern(regexp = "\\d{8}", message = "날짜는 8자리 숫자(예: 20260916) 형식이어야 합니다.")  String date,
             @RequestParam @Pattern(regexp = "\\d{6}", message = "출발 시간은 6자리 숫자(예: 143000) 형식이어야 합니다.")  String time,
             @RequestParam @Pattern(regexp = "\\d+", message = "열차 번호는 숫자로 입력해야 합니다.") String trainNum
+    ) {
+        SegmentSeatStatus segmentSeatStatus =
+                fetchSegmentSeatStatus(departureStation, arrivalStation, date, time, trainNum);
+
+        List<SeatResponse> seats = seatRecommendationService.recommend(segmentSeatStatus.segments())
+                .stream()
+                .map(SeatResponse::from)
+                .toList();
+
+        return new SeatMatrixResponse(segmentSeatStatus.stops(), seats);
+    }
+
+    // 코레일에서 구간별 좌석 원본을 수집 (열차 매칭 -> 구간별 좌석 조회)
+    private SegmentSeatStatus fetchSegmentSeatStatus(
+            String departureStation, String arrivalStation, String date, String time, String trainNum
     ) {
         KorailClient korailClient = new KorailClient();
         TrainRunPlanService trainRunPlanService = new TrainRunPlanService();
