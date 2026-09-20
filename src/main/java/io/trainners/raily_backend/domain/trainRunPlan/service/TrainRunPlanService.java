@@ -5,12 +5,14 @@ import io.trainners.raily_backend.domain.trainRunPlan.dto.TrainRunInfo;
 import io.trainners.raily_backend.domain.trainRunPlan.dto.TrainRunInfoApiResponse;
 import io.trainners.raily_backend.global.exception.BusinessException;
 import io.trainners.raily_backend.global.exception.ErrorCode;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+@Service // 스케줄러 & SeatWatchService가 주입받을 수 있게 빈으로 등록
 public class TrainRunPlanService {
     // 응답에서 리스트 꺼내기
     public List<String> getStopStations(String runDate, String trainNo, TrainRunPlanClient trainRunPlanClient) {
@@ -69,6 +71,45 @@ public class TrainRunPlanService {
         }
 
         return stops.subList(dptStnIdx, arrStnIdx + 1);
+    }
+
+    // 착석역 ~ 하차역 구간의 정차역을 도착 / 출발 시각까지 포함해 잘라 반환함
+    // 전에 생성한 getStopsBetween은 역 이름만 주기 때문에 감시 윈도우 계산에는 사용할 수 없다.
+    public List<TrainRunInfo> getTrainRunInfosBetween(
+            String runDate, String trainNo, String dptStn,
+            String arrStn, TrainRunPlanClient trainRunPlanClient
+    ) {
+        List<TrainRunInfo> infos = getTrainRunInfoList(
+                runDate, trainNo, trainRunPlanClient
+        );
+
+        // 공공데이터에 해당 열차 운행 기록이 없으면 이후 인덱스 계산이 전부 무의미하다
+        if (infos.isEmpty()) {
+            throw new BusinessException(ErrorCode.TRAIN_NOT_FOUND);
+        }
+
+        // 역 이름 리스트로 인덱스를 찾는다. indexOf 는 List<TrainRunInfo> 에 바로 쓸 수 없다.
+        int dptStnIdx = -1;
+        int arrStnIdx = -1;
+        for (int i = 0; i < infos.size(); i++) {
+            String stationName = infos.get(i).stationName();
+            if (dptStnIdx == -1 && stationName.equals(dptStn)) {
+                dptStnIdx = i;
+            }
+            if (stationName.equals(arrStn)) {
+                arrStnIdx = i;   // 같은 역을 두 번 지나는 노선을 대비해 마지막 것을 쓴다
+            }
+        }
+
+        // getStopsBetween 과 동일한 검증 규칙
+        if (dptStnIdx == -1 || arrStnIdx == -1) {
+            throw new BusinessException(ErrorCode.STATION_NOT_ON_ROUTE);
+        }
+        if (dptStnIdx >= arrStnIdx) {
+            throw new BusinessException(ErrorCode.INVALID_STATION_ORDER);
+        }
+
+        return infos.subList(dptStnIdx, arrStnIdx + 1);
     }
 
     // 역별 도착시각까지 가져오는 메서드(스케쥴러용)

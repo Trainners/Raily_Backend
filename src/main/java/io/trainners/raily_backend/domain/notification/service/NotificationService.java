@@ -2,6 +2,7 @@ package io.trainners.raily_backend.domain.notification.service;
 
 import io.trainners.raily_backend.domain.notification.model.dto.SeatWatchRequest;
 import io.trainners.raily_backend.domain.notification.model.entity.SeatWatch;
+import io.trainners.raily_backend.domain.notification.repository.NotificationRepository;
 import io.trainners.raily_backend.domain.notification.repository.SeatWatchRepository;
 import io.trainners.raily_backend.domain.user.model.entity.User;
 import io.trainners.raily_backend.domain.user.repository.UserRepository;
@@ -13,22 +14,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
+    private final NotificationRepository notificationRepository;
 
-    private final SeatWatchRepository seatWatchRepository;
-    private final UserRepository userRepository;
-
-    public void createSeatWatch(String email, SeatWatchRequest request){
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(()-> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-        SeatWatch seatWatch = SeatWatch.builder()
-                .user(user)
-                .trainNumber(request.trainNumber())
-                .carNumber(request.carNumber())
-                .seatNumber(request.seatNumber())
-                .build();
-
-        seatWatchRepository.save(seatWatch);
-    }
-
+    // 알림함 조회·읽음 처리는 다음 단계에서 추가
 }

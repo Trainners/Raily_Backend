@@ -2,7 +2,7 @@ package io.trainners.raily_backend.domain.notification.controller;
 
 
 import io.trainners.raily_backend.domain.notification.model.dto.SeatWatchRequest;
-import io.trainners.raily_backend.domain.notification.service.NotificationService;
+import io.trainners.raily_backend.domain.notification.service.SeatWatchService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,7 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class NotificationController {
 
-    private final NotificationService notificationService;
+    // createSeatWatch가 SeatWatchService로 옮겨갔으므로 컨트롤러도 그 쪽을 보게 한다
+    private final SeatWatchService seatWatchService;
 
     @PostMapping("/seat-watch")
     public ResponseEntity<Void> createSeatWatch(
@@ -26,7 +27,7 @@ public class NotificationController {
             @RequestBody @Valid SeatWatchRequest request
     ){
         String email = authentication.getName();
-        notificationService.createSeatWatch(email, request);
+        seatWatchService.create(email, request);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
