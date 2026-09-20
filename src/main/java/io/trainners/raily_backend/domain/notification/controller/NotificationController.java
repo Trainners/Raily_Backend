@@ -1,6 +1,7 @@
 package io.trainners.raily_backend.domain.notification.controller;
 
 
+import io.trainners.raily_backend.domain.notification.model.dto.SeatWatchCreateResponse;
 import io.trainners.raily_backend.domain.notification.model.dto.SeatWatchRequest;
 import io.trainners.raily_backend.domain.notification.service.SeatWatchService;
 import jakarta.validation.Valid;
@@ -22,13 +23,13 @@ public class NotificationController {
     private final SeatWatchService seatWatchService;
 
     @PostMapping("/seat-watch")
-    public ResponseEntity<Void> createSeatWatch(
+    public ResponseEntity<SeatWatchCreateResponse> createSeatWatch(
             Authentication authentication,
             @RequestBody @Valid SeatWatchRequest request
     ){
         String email = authentication.getName();
-        seatWatchService.create(email, request);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        SeatWatchCreateResponse response = seatWatchService.create(email, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
 }
