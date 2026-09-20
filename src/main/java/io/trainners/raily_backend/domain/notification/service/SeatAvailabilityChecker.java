@@ -57,8 +57,11 @@ public class SeatAvailabilityChecker {
 
             // 2) 내 호차의 잔여석을 본다
             TrainResearchApiResponse research = korailClient.fetchTrainResearch(train);
-            if (research.getCarInfos() == null) {
-                return SeatCheckResult.stillFree();
+            // carInfos가 null이면 오류가 아니라 "이 구간 전 호차 매진"이다
+            // ScheduleView에서 열차를 이미 찾았으므로 요청 자체는 정상이었다.
+            // -> 전 호차가 찼다면 내 좌석도 팔린 것
+            if (research.getCarInfos() == null || research.getCarInfos().getTrainInfoList() == null) {
+                return SeatCheckResult.soldFrom(from.getStationName());
             }
 
             TrainResearchResponse car = findCar(research.getCarInfos().getTrainInfoList(), watch.getCarNumber());
