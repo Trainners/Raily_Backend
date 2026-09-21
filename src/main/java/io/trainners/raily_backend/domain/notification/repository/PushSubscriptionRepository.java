@@ -18,4 +18,7 @@ public interface PushSubscriptionRepository extends JpaRepository<PushSubscripti
 
     // 푸시 발송 시 404 / 410 만료 응답을 받은 구독 정리 (소유자 무관)
     void deleteByEndpoint(String endpoint);
+
+    // 테스트 푸시: 이메일로 내 기기 전체 조회
+    List<PushSubscription> findAllByUserEmail(String email);
 }
