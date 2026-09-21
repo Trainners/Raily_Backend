@@ -34,6 +34,7 @@ public class JwtProvider {
 
         return Jwts.builder()
                 .setSubject(email)
+                .claim("type", "access")
                 .setIssuedAt(now)
                 .setExpiration(expiry)
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -46,6 +47,7 @@ public class JwtProvider {
 
         return Jwts.builder()
                 .setSubject(email)
+                .claim("type", "refresh")
                 .setIssuedAt(now)
                 .setExpiration(expiry)
                 .signWith(key, SignatureAlgorithm.HS256)

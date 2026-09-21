@@ -1,5 +1,6 @@
 package io.trainners.raily_backend.domain.auth.controller;
 
+import io.trainners.raily_backend.domain.auth.jwt.JwtProvider;
 import io.trainners.raily_backend.domain.auth.model.dto.LoginRequest;
 import io.trainners.raily_backend.domain.auth.model.dto.LoginResponse;
 import io.trainners.raily_backend.domain.auth.model.dto.LoginResult;
@@ -21,6 +22,7 @@ import java.time.Duration;
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
+    private final JwtProvider jwtProvider;
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody @Valid LoginRequest request, HttpServletResponse response){
@@ -30,7 +32,7 @@ public class AuthController {
                 .httpOnly(true)
                 .secure(true)
                 .path("/api/auth")
-                .maxAge(Duration.ofDays(14))
+                .maxAge(Duration.ofMillis(jwtProvider.getRefreshTokenValidity()))
                 .sameSite("Strict")
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
