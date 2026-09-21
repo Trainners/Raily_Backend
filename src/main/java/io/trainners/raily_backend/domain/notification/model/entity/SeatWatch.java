@@ -153,6 +153,13 @@ public class SeatWatch {
         return -1; // 모든 정차역을 확인했지만 윈도우에 든 역이 없음
     }
 
+
+    // stopIndex번째 정차역의 출발 일시. 코레일 조회에 날짜와 시각을 함께 넘겨야 해서 필요함
+    // 자정을 넘기는 열차는 toDateTime 이 날짜를 +1일 보정한다
+    public LocalDateTime departureDateTimeOf(int stopIndex) {
+        return toDateTime(stops.get(stopIndex).getDepartureTime());
+    }
+
     // 여정이 끝났는지 판단
     public boolean isJourneyOver(LocalDateTime now) {
         return now.isAfter(toDateTime(arrivalTime));
