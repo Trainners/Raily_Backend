@@ -40,12 +40,4 @@ public class SeatOption {
     public int getAvailableSegmentCount(){
         return (int) availabilityBySegment.stream().filter(Boolean::booleanValue).count();
     }
-
-    public boolean isSeatableNow(){
-        return getInitialContiguousRun() > 0;
-    }
-
-    public boolean coversWholeJourney(){
-        return getInitialContiguousRun() == availabilityBySegment.size();
-    }
 }
