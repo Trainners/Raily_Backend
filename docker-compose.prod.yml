@@ -40,6 +40,9 @@ services:
       JAVA_OPTS: >-
         -XX:MaxRAMPercentage=75
         -Duser.timezone=Asia/Seoul
+      WEBPUSH_VAPID_PUBLICKEY: ${WEBPUSH_VAPID_PUBLIC_KEY}
+      WEBPUSH_VAPID_PRIVATEKEY: ${WEBPUSH_VAPID_PRIVATE_KEY}
+      WEBPUSH_VAPID_SUBJECT: ${WEBPUSH_VAPID_SUBJECT}
     restart: unless-stopped
 
 volumes:
