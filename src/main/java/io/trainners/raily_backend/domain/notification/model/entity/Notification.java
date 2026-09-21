@@ -79,10 +79,19 @@ public class Notification {
                 .type(NotificationType.SEAT_SOLD)
                 .title("좌석 판매 알림")
                 .body(String.format("%s역부터 %s호차 %s 좌석이 판매되었습니다. 이동해 주세요.",
-                        watch.getSoldFromStation(), watch.getCarNumber(), watch.getSeatNumber()))
+                        watch.getSoldFromStation(), displayCarNumber(watch.getCarNumber()), watch.getSeatNumber()))
                 .linkUrl("/notifications")
                 .seatWatchId(watch.getId())
                 .build();
+    }
+
+    // 코레일 형식 "0003" -> 사용자에게 보여줄 형태 "3" (저장&조회=원본, 문구 만들 때만 0 뺌)
+    private static String displayCarNumber(String carNumber) {
+        try {
+            return String.valueOf(Integer.parseInt(carNumber));
+        } catch (NumberFormatException e) {
+            return carNumber; // 숫자가 아니면 원본 그대로
+        }
     }
 
     public void markAsRead() {
