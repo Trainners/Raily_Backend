@@ -57,8 +57,4 @@ public class User {
     private void prePersist(){
         this.createdAt = LocalDateTime.now();
     }
-
-    public void changePassword(String encodedPassword){
-        this.password = encodedPassword;
-    }
 }
